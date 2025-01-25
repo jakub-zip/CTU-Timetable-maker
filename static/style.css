@@ -1,0 +1,41 @@
+.ctm-table{
+    width:  100%;
+}
+
+.ctm-day:nth-child(odd) {
+    background-color: #bababa;
+}
+
+/* Color for even rows */
+.ctm-day:nth-child(even) {
+    background-color: #ffffff;
+}
+
+.ctm-day{
+    height: fit-content;
+}
+
+.ctm-day-label{
+    float:left;
+    width: 10%;
+}
+
+.ctm-day-rows{
+    width: 90%;
+    float:left;
+    font-size: 1rem;
+}
+
+.ctm-row{
+    height: 4rem;
+    position: relative;
+}
+
+.ctm-event {
+    height: inherit;
+    position: absolute;
+    border-color: black;
+    border-width: 2px;
+    border-radius: 0.2rem;
+    border-style: solid;
+}
