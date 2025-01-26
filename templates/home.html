@@ -14,12 +14,13 @@
         <li>{{ semester["id"] }} - {{ semester["nameCs"] }}</li>
     {% endfor %}
     </ul>
-        {% for sem, cc in course_codes %}
-        <h2>{{sem}}</h2>
-                    {{ tv(user_data.get_schedule_courses(cc, sem)) | safe }}
-            {% endfor %}
-        <br>
-    {{ user_data.login_data }}
+    <h2>Rozvrhy pro zapsané předměty v semestrech</h2>
+    {% for sem, cc in course_codes %}
+    <a href="/timetable?courses={{ cc | join(',') }}&semester={{ sem }}">{{sem}}</a>
+    {% endfor %}
+    <pre>
+    {{ pformat(user_data.login_data) }}
+    </pre>
   {% else %}
     <h1>Welcome!</h1>
     <a href="/login">Login</a>

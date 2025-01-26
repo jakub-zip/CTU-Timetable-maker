@@ -1,5 +1,7 @@
+from math import ceil
 import requests
 import matplotlib.pyplot as plt
+import matplotlib.colors as pltc
 from datetime import datetime, time
 
 import hashlib
@@ -16,6 +18,34 @@ def name_to_color(name):
     blue = hex_digest[4:6]  # Following 2 hex digits
 
     return f"#{red}{green}{blue}"
+
+
+def generate_colormap_colors(num):
+    colormap = plt.cm.get_cmap("tab20", num)  # Use 'tab20' or other colormaps
+    return [
+        (pltc.to_hex(colormap(i)), best_text_color([int(a * 255) for a in colormap(i)]))
+        for i in range(num)
+    ]
+
+
+def calculate_luminance(color):
+    # Convert RGB (0-255) to linear values (0-1)
+    r, g, b = [x / 255.0 for x in color][:3]
+    linear = lambda x: x / 12.92 if x <= 0.03928 else ((x + 0.055) / 1.055) ** 2.4
+    r, g, b = linear(r), linear(g), linear(b)
+    # Calculate luminance
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b
+
+
+def best_text_color(background_color):
+    white = (255, 255, 255)
+    black = (0, 0, 0)
+    # Calculate contrast ratios
+    background_luminance = calculate_luminance(background_color)
+    white_contrast = (calculate_luminance(white) + 0.05) / (background_luminance + 0.05)
+    black_contrast = (background_luminance + 0.05) / (calculate_luminance(black) + 0.05)
+    # Return the color with higher contrast
+    return "white" if white_contrast > black_contrast else "black"
 
 
 base = "https://kos.cvut.cz/rest/api/"
@@ -256,8 +286,28 @@ def visualize_timetable_html(timetable):
                 plotted_events[-1].append([])
             plotted_events[-1][row].append((start, end, event))
 
+    type_to_class = {
+        "P": "ctm-event-lecture",
+        "C": "ctm-event-seminar",
+        "L": "ctm-event-lab",
+    }
+
+    courses = list(map(lambda x: x["name"], timetable))
+    colorpalet = generate_colormap_colors(len(courses))
+    course_colors = {course: colorpalet[i] for i, course in enumerate(courses)}
+
     out = '<div class="ctm-table">'
     lenght = max_time - min_time
+    out += '<div class="ctm-grid-wrapper-wrapper">'
+    out += '<div class="ctm-grid-wrapper">'
+    out += '<div class="ctm-grid">'
+    out += '<svg width="100%" height="100%">'
+    for hour in range(ceil(min_time), ceil(max_time)):
+        out += f'<line stroke="rgb(27,27,27)" stroke-width="1" y1="0%" y2="100%" x1={(hour - min_time) * 100 / lenght}% x2={(hour - min_time) * 100 / lenght}%></line>'
+    out += "</svg>"
+    out += "</div>"
+    out += "</div>"
+    out += "</div>"
     for i, day in enumerate(plotted_events):
         out += f'<div class="ctm-day" style="height:{max(4, 4 * len(day))}rem">'
         out += f'<div class="ctm-day-label">{days_names[i]}</div>'
@@ -265,7 +315,9 @@ def visualize_timetable_html(timetable):
         for row in day:
             out += '<div class="ctm-row">'
             for event in row:
-                out += f'<div class="ctm-event" style="width:{(event[1] - event[0]) * 100 / lenght}%;left:{(event[0] - min_time) * 100 / lenght}%">'
+                out += f'<div class="ctm-event {type_to_class[event[2]["type"]]}" '
+                out += f'style="width:{(event[1] - event[0]) * 100 / lenght}%;left:{(event[0] - min_time) * 100 / lenght}%;'
+                out += f'background-color: {course_colors[event[2]["name"]][0]}; color: {course_colors[event[2]["name"]][1]}">'
                 out += (
                     event[2]["type"]
                     + " - "
@@ -274,6 +326,10 @@ def visualize_timetable_html(timetable):
                     + event[2]["teachers"]
                     + "<br>"
                     + event[2]["room"]
+                    + "<br>"
+                    + event[2]["starttime"]
+                    + " - "
+                    + event[2]["endtime"]
                 )
                 out += "</div>"
             out += "</div>"

@@ -40,7 +40,6 @@ def home():
         "home.html",
         user_data=session.get("kos"),
         pformat=pprint.pformat,
-        tv=visualize_timetable_html,
         courses=kos.get_courses(),
         course_codes=course_codes.items(),
     )
@@ -71,6 +70,8 @@ def timetable():
     return render_template(
         "timetable.html",
         timetable=visualize_timetable_html(kos.get_schedule_courses(courses, semester)),
+        courses=courses,
+        semester=semester,
     )
 
 
