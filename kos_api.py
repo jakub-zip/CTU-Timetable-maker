@@ -3,6 +3,7 @@ import requests
 import matplotlib.pyplot as plt
 import matplotlib.colors as pltc
 from datetime import datetime, time
+from functools import lru_cache
 
 import hashlib
 
@@ -63,6 +64,7 @@ class KOSApi:
             data={"username": username, "password": password},
         )
         self.login_data = login.json()
+        self.cached_courses = dict()
 
     def get_schedule_course(self, code: str, semester: str):
         try:
@@ -75,6 +77,8 @@ class KOSApi:
                 },
             ).json()["elements"][0]["courseId"]
         except IndexError:
+            return []
+        except KeyError:
             return []
 
         timetable = self.s.get(
@@ -116,6 +120,21 @@ class KOSApi:
     def get_semesters(self):
         return self.login_data["studies"][0]["semesters"]
 
+    def get_available_courses(self, semester):
+        if semester in self.cached_courses:
+            return self.cached_courses[semester]
+        self.cached_courses[semester] = self.s.get(
+            base + "course-semesters",
+            params={
+                "studyId": self.login_data["studies"][0]["id"],
+                "size": 0,
+                "hideFinished": False,
+                "query": f"semesterId=={semester}",
+            },
+        ).json()["elements"]
+
+        return self.cached_courses[semester]
+
     def get_courses(self):
         courses = self.s.get(
             base + "registered-courses",
@@ -132,6 +151,13 @@ class KOSApi:
             courses_by_semester[c["semester"]["id"]].append(c)
 
         return courses_by_semester
+
+    @property
+    def name(self):
+        return " ".join([
+            self.login_data["person"]["firstName"],
+            self.login_data["person"]["lastName"],
+        ])
 
 
 # Days in the week for ordering
@@ -217,28 +243,14 @@ def visualize_timetable(timetable):
             color="lightgray" if day % 2 == 0 else "white",
             alpha=0.5,
         )
-    #
-    # for day in days_order:
-    #     print(
-    #         dict(
-    #             s=prefix_rows[day - 1],
-    #             e=prefix_rows[day],
-    #             color="lightgray" if day % 2 == 0 else "white",
-    #             alpha=0.2,
-    #         )
-    #     )
 
     ax.set_yticks(ticks)
-    # print(ticks)
-    # print(prefix_rows)
     ax.set_yticklabels(days_names)
     ax.set_xticks(list(map(lambda x: x.hour + x.minute / 60, hour_start_times)))
     ax.set_xticklabels(list(map(lambda x: x.strftime("%H:%M"), hour_start_times)))
     ax.set_xlabel("Time (hours)")
     ax.set_title("Weekly Timetable")
 
-    # Adjust limits and add grid
-    # ax.set_ylim(len(days_order) - 0.5, -0.5)
     ax.grid(axis="x", linestyle="--", alpha=0.7)
 
     return fig
@@ -309,11 +321,11 @@ def visualize_timetable_html(timetable):
     out += "</div>"
     out += "</div>"
     for i, day in enumerate(plotted_events):
-        out += f'<div class="ctm-day" style="height:{max(4, 4 * len(day))}rem">'
+        out += f'<div class="ctm-day" id="day-{i}" style="height:{max(4, 4 * len(day))}rem">'
         out += f'<div class="ctm-day-label">{days_names[i]}</div>'
         out += '<div class="ctm-day-rows">'
-        for row in day:
-            out += '<div class="ctm-row">'
+        for j, row in enumerate(day):
+            out += f'<div class="ctm-row" id="row-{i}-{j}">'
             for event in row:
                 out += f'<div class="ctm-event {type_to_class[event[2]["type"]]}" '
                 out += f'style="width:{(event[1] - event[0]) * 100 / lenght}%;left:{(event[0] - min_time) * 100 / lenght}%;'
@@ -333,7 +345,33 @@ def visualize_timetable_html(timetable):
                 )
                 out += "</div>"
             out += "</div>"
+            out += "<script>"
+            out += "function setRowSizes(row_id) { return () => { var max_height = 0; "
+            out += "var children = document.getElementById(row_id).children;"
+            out += """for (var i = 0; i < children.length; i++) {
+                  var tableChild = children[i];
+                  max_height = tableChild.offsetHeight < max_height ? max_height : tableChild.offsetHeight;
+                }
+                """
+            out += 'document.getElementById(row_id).style.height = max_height + "px";'
+            out += "}}"
+            out += f"window.addEventListener('resize', setRowSizes('row-{i}-{j}'));"
+            out += f"window.addEventListener('load', setRowSizes('row-{i}-{j}'))"
+            out += "</script>"
         out += "</div>"
+        out += "<script>"
+        out += "function setDaySizes(row_id) { return () => { var max_height = 0; "
+        out += "var children = document.getElementById(row_id).children;"
+        out += """for (var i = 0; i < children.length; i++) {
+              var tableChild = children[i];
+              max_height = tableChild.offsetHeight < max_height ? max_height : tableChild.offsetHeight;
+            }
+            """
+        out += f'document.getElementById("day-{i}").style.height = max_height + "px";'
+        out += "}}"
+        out += f"window.addEventListener('resize', setDaySizes('day-{i}'));"
+        out += f"window.addEventListener('load', setDaySizes('day-{i}'))"
+        out += "</script>"
         out += "</div>"
 
     out += "</div>"

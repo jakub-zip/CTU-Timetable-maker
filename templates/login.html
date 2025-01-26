@@ -1,14 +1,31 @@
-<!DOCTYPE html>
-<html>
-<head><title>Login</title></head>
-<body>
-  <h1>Login</h1>
-  <form method="post">
-    <label>Username:</label><br>
-    <input type="text" name="username" required><br>
-    <label>Password:</label><br>
-    <input type="password" name="password" required><br><br>
-    <button type="submit">Login</button>
-  </form>
-</body>
-</html>
+{% extends "layout.html" %}
+
+{% block body %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-lg">
+                <div class="card-header text-center bg-primary text-white">
+                    <h3>Login</h3>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="/login">
+                        <div class="mb-3">
+                            <label for="username" class="form-label">Username</label>
+                            <input type="text" id="username" name="username" class="form-control" placeholder="Enter your username" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Password</label>
+                            <input type="password" id="password" name="password" class="form-control" placeholder="Enter your password" required>
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">Login</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

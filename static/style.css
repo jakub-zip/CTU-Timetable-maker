@@ -51,12 +51,14 @@
 }
 
 .ctm-row{
-    height: 4rem;
+    min-height: 4rem;
     position: relative;
+    margin: 0.1rem;
+    display: flex;
 }
 
 .ctm-event {
-    height: inherit;
+    /* height: inherit; */
     position: absolute;
     border-color: black;
     border-width: 0;
@@ -64,6 +66,7 @@
     border-radius: 0.2rem;
     border-style: solid;
     padding: 0.2rem;
+    min-height: 2rem;
 }
 
 .ctm-event-lecture {
@@ -74,4 +77,14 @@
 }
 .ctm-event-lab {
     border-color: #FF9988;
+}
+
+/*Added*/
+.clearfix {
+  clear: both;
+}
+.clearfix:after {
+  clear: both; 
+  content: "";
+  display: table; 
 }

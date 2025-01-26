@@ -10,8 +10,6 @@ from flask import (
 )
 from flask_session import Session
 import pprint
-import mpld3
-import plotly.tools as tls
 
 
 from kos_api import KOSApi, visualize_timetable_html
@@ -67,12 +65,21 @@ def timetable():
     courses = request.args.get("courses").split(",")
     semester = request.args.get("semester")
 
+    print(courses)
+
     return render_template(
         "timetable.html",
         timetable=visualize_timetable_html(kos.get_schedule_courses(courses, semester)),
         courses=courses,
         semester=semester,
+        user_data=kos,
     )
+
+
+@app.route("/logout")
+def logout():
+    session.pop("kos")
+    return redirect("/")
 
 
 app.run(debug=True)
