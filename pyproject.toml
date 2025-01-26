@@ -2,7 +2,7 @@
 name = "ctu-timetable-maker"
 version = "0.1.0"
 description = "Timetable maker for CTU"
-authors = ["Your Name <you@example.com>"]
+authors = ["Bertik23 <bertik23@bertik23.tech>"]
 license = "MIT"
 readme = "README.md"
 
