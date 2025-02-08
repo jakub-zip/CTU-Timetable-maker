@@ -5,6 +5,7 @@ description = "Timetable maker for CTU"
 authors = ["Bertik23 <bertik23@bertik23.tech>"]
 license = "MIT"
 readme = "README.md"
+package-mode = false
 
 [tool.poetry.dependencies]
 python = "^3.13"
