@@ -11,8 +11,9 @@ RUN pip install poetry
 COPY pyproject.toml README.md /app/
 
 # Install dependencies using Poetry
-RUN poetry config virtualenvs.create false \
-    && poetry install --no-interaction --no-ansi
+# RUN poetry config virtualenvs.create false \
+    # && poetry install --no-interaction --no-ansi --no-root
+RUN poetry install --no-interaction
 
 # Copy the rest of the application code
 COPY . /app
